@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Location Tracking</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <h3>Live Location Tracking</h3>
+    <div id="map" style="height: 500px; margin-top: 10px;"></div>
+
+    <script>
+        // Initialize the map with a default view
+        var map = L.map('map').setView([0, 0], 2); // Default global view
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        var marker = null; // Marker for current location
+        var pathLine = null; // Polyline for the path
+        var pathCoordinates = []; // Array to store path coordinates
+
+        // Function to update the user's location
+        function updateLocation(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+
+            console.log(`Live Coordinates: Latitude: ${lat}, Longitude: ${lon}`);
+
+            // Add the new coordinates to the path
+            pathCoordinates.push([lat, lon]);
+
+            // Create or move the marker
+            if (!marker) {
+                marker = L.marker([lat, lon]).addTo(map)
+                    .bindPopup("You are here").openPopup();
+                map.setView([lat, lon], 18); // Center and zoom to user's location
+            } else {
+                marker.setLatLng([lat, lon]);
+            }
+
+            // Create or update the path line
+            if (!pathLine) {
+                pathLine = L.polyline(pathCoordinates, { color: 'blue' }).addTo(map);
+            } else {
+                pathLine.setLatLngs(pathCoordinates);
+            }
+        }
+
+        // Function to handle geolocation errors
+        function handleLocationError(error) {
+            let errorMessage = '';
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "Location permission denied by the user.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "Location request timed out.";
+                    break;
+                default:
+                    errorMessage = "An unknown error occurred.";
+                    break;
+            }
+            console.error("Error getting location: ", errorMessage);
+            alert(errorMessage);
+        }
+
+        // Check if Geolocation API is available
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(updateLocation, handleLocationError, {
+                enableHighAccuracy: true, // Prioritize GPS accuracy
+                maximumAge: 0,           // Always fetch fresh location data
+            });
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    </script>
+</body>
+</html>
